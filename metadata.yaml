@@ -2,9 +2,14 @@ name: astrbot_plugin_sendmsg
 display_name: QQ 群发消息
 desc: 通过 /sendmsg 命令向指定 QQ 群、好友或全部群与好友发送消息。
 short_desc: 管理员控制 Bot 向 QQ 群和好友群发消息。
-version: 1.0.0
-author: jijiang
-repo: local
+version: 1.0.1
+author: JiJiang233
+repo: https://github.com/JiJiang233/astrbot_plugin_sendmsg
 astrbot_version: ">=4.9.2,<5"
 support_platforms:
   - aiocqhttp
+social_link: https://github.com/JiJiang233
+tags:
+  - qq
+  - 群发
+  - 管理工具

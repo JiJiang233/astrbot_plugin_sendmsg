@@ -2,6 +2,8 @@
 
 AstrBot 的 QQ 群发消息插件。管理员可以通过一个 `/sendmsg` 命令，控制当前 aiocqhttp（OneBot v11）Bot 向单个群、单个好友、全部群、全部好友或全部联系人发送消息。
 
+项目仓库：[JiJiang233/astrbot_plugin_sendmsg](https://github.com/JiJiang233/astrbot_plugin_sendmsg)
+
 ## 环境要求
 
 - AstrBot `>= 4.9.2, < 5`
@@ -49,4 +51,9 @@ AstrBot 的 QQ 群发消息插件。管理员可以通过一个 `/sendmsg` 命�
 
 ## 版本
 
+- `1.0.1`：补充 MIT License、GitHub 仓库地址和插件市场元数据。
 - `1.0.0`：实现单目标、全部群、全部好友和全部联系人群发；支持持续收集消息、单条直发、多条合并转发、取消、超时和失败汇总。
+
+## 开源协议
+
+本项目基于 [MIT License](LICENSE) 开源。

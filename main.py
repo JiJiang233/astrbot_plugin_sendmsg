@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import asyncio
+import json
+import random
+import re
 from dataclasses import dataclass
 from typing import Any, Literal
 
+from aiocqhttp.exceptions import ActionFailed
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, MessageChain, filter
 from astrbot.api.message_components import Node, Nodes, Plain
@@ -21,7 +25,8 @@ from astrbot.core.utils.session_waiter import (
 
 PLUGIN_NAME = "astrbot_plugin_sendmsg"
 WAIT_TIMEOUT_SECONDS = 120
-SEND_INTERVAL_SECONDS = 0.15
+MIN_SEND_INTERVAL_SECONDS = 0.5
+MAX_SEND_INTERVAL_SECONDS = 3.0
 
 HELP_TEXT = """AstrBot 群发消息
 
@@ -297,9 +302,20 @@ class SendmsgPlugin(Star):
                     session_id=target_id,
                 )
                 succeeded += 1
+            except ActionFailed as exc:
+                label = "群" if kind == "group" else "好友"
+                reason = "被禁言，发送失败" if self._is_muted_error(exc) else "发送失败"
+                failures.append(f"{label} {target_id}（{reason}）")
+                logger.warning(
+                    "[%s] 发送到 %s %s 失败: %s",
+                    PLUGIN_NAME,
+                    kind,
+                    target_id,
+                    exc,
+                )
             except Exception as exc:  # noqa: BLE001 - 单目标失败不应中断群发
                 label = "群" if kind == "group" else "好友"
-                failures.append(f"{label} {target_id}（{exc}）")
+                failures.append(f"{label} {target_id}（发送失败）")
                 logger.warning(
                     "[%s] 发送到 %s %s 失败: %s",
                     PLUGIN_NAME,
@@ -308,9 +324,35 @@ class SendmsgPlugin(Star):
                     exc,
                 )
             if index + 1 < len(targets):
-                await asyncio.sleep(SEND_INTERVAL_SECONDS)
+                await asyncio.sleep(
+                    random.uniform(
+                        MIN_SEND_INTERVAL_SECONDS,
+                        MAX_SEND_INTERVAL_SECONDS,
+                    )
+                )
 
         return succeeded, failures
+
+    @staticmethod
+    def _is_muted_error(exc: ActionFailed) -> bool:
+        detail = json.dumps(exc.result, ensure_ascii=False, default=str).lower()
+        muted_markers = (
+            "禁言",
+            "muted",
+            "mute",
+            "group ban",
+            "banned from speaking",
+        )
+        if any(marker in detail for marker in muted_markers):
+            return True
+
+        # NapCat / QQ NT 在 Bot 被禁言时常返回：外层 retcode=1200，
+        # NodeIKernelMsgService/sendMsg 的内部 EventRet result=120。
+        return (
+            exc.retcode == 1200
+            and "nodeikernelmsgservice/sendmsg" in detail
+            and re.search(r"\"result\"\s*:\s*120\b", detail) is not None
+        )
 
     @staticmethod
     def _copy_message_chain(event: AstrMessageEvent) -> MessageChain:
